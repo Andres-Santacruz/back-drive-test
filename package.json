@@ -4,8 +4,9 @@
   "description": "this is a test back",
   "main": "index.js",
   "scripts": {
+    "build": "tsc --build",
     "dev": "ts-node-dev src/index.ts",
-    "start": "node build/index.js",
+    "start": "npm run build && node build/index.js",
     "tsc": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
