@@ -13,6 +13,12 @@ interface IBodyInforme {
   company_id: number;
 }
 
+interface ICustomRequest extends Request {
+  user?: {
+    email: string;
+  };
+}
+
 const informesRoute = Router();
 
 informesRoute.post(
@@ -51,8 +57,16 @@ informesRoute.post(
   }
 );
 
-informesRoute.get("/informe/:id", async (req, res) => {
+informesRoute.get("/informe/:id", async (req: ICustomRequest, res) => {
   const { id } = req.params;
+  const email = req.user?.email;
+
+  if (!email) {
+    return res.status(401).json({
+      error: "Usuario no encontrado",
+      data: null,
+    });
+  }
 
   const resInforme = await prisma.informes.findFirst({
     where: {
@@ -67,7 +81,27 @@ informesRoute.get("/informe/:id", async (req, res) => {
     });
   }
 
-  const { url, type } = resInforme;
+  const { url, type, company_id } = resInforme;
+
+  const companyInfo = await prisma.companies.findFirst({
+    where: {
+      id: company_id,
+    },
+    select: {
+      id: true,
+      nameComercial: true,
+      users: true,
+    },
+  });
+
+  const findUser = companyInfo?.users.map((user) => user.email === email);
+
+  if (!findUser || findUser.length === 0) {
+    return res.status(401).json({
+      data: null,
+      error: "Usuario no tiene permiso para ver este informe",
+    });
+  }
 
   const r = await axios.get(url, {
     responseType: "blob",
@@ -88,6 +122,7 @@ informesRoute.get("/informe/:id", async (req, res) => {
           chart: resulstData,
           info: {
             type,
+            companyName: companyInfo?.nameComercial,
           },
         },
         error: null,
