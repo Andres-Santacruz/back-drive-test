@@ -102,6 +102,12 @@ informesRoute.get("/informe/:id", async (req: ICustomRequest, res) => {
       error: "Usuario no tiene permiso para ver este informe",
     });
   }
+  if (!findUser[0]) {
+    return res.status(401).json({
+      data: null,
+      error: "Usuario no tiene permiso para ver este informe",
+    });
+  }
 
   const r = await axios.get(url, {
     responseType: "blob",
@@ -111,7 +117,6 @@ informesRoute.get("/informe/:id", async (req: ICustomRequest, res) => {
     complete: (results) => {
       const resulstData = results.data;
       if (results.errors.length > 0) {
-        console.log("results.errors", results.errors);
         return res.status(404).json({
           data: null,
           error: "No se pudo cargar la información",
